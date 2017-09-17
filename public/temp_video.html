@@ -1,0 +1,119 @@
+CTYPE html>
+<html>
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+</head>
+<body onload="init();">
+<h1>Take a snapshot of the current video stream</h1>
+Click on the Start WebCam button.
+<p>
+    <button onclick="startWebcam();">Start WebCam</button>
+    <button onclick="stopWebcam();">Stop WebCam</button>
+    <button onclick="snapshot();">Take Snapshot</button>
+</p>
+<video onclick="snapshot(this);" width=400 height=400 id="video" controls autoplay></video>
+<p>
+
+    Screenshots : <p>
+    <canvas  id="myCanvas" width="400" height="350"></canvas>
+    <p id="data_url"></p>
+</body>
+<script>
+    function get_val(data_url) {
+        var url = "{\"url\": \"" + data_url + "\"}";
+        var params = {
+            // Request parameters
+        };
+
+        $.ajax({
+            // NOTE: You must use the same location in your REST call as you used to obtain your subscription keys.
+            //   For example, if you obtained your subscription keys from westcentralus, replace "westus" in the
+            //   URL below with "westcentralus".
+            url: "https://westus.api.cognitive.microsoft.com/emotion/v1.0/recognize?" + $.param(params),
+            beforeSend: function(xhrObj){
+                // Request headers
+                xhrObj.setRequestHeader("Content-Type","application/json");
+
+                // NOTE: Replace the "Ocp-Apim-Subscription-Key" value with a valid subscription key.
+                xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","40fb7acb4fd14e41ba3e666e5ec602ff");
+            },
+            type: "POST",
+            // Request body
+            data: '{\"url\": "http://weknowyourdreams.com/images/angry/angry-05.jpg"}',
+        })
+            .done(function(data) {
+                var x = JSON.stringify(data);
+                alert(x);
+            })
+            .fail(function() {
+                alert("error");
+            });
+    }
+
+    //--------------------
+    // GET USER MEDIA CODE
+    //--------------------
+    navigator.getUserMedia = ( navigator.getUserMedia ||
+    navigator.webkitGetUserMedia ||
+    navigator.mozGetUserMedia ||
+    navigator.msGetUserMedia);
+
+    var video;
+    var webcamStream;
+
+    function startWebcam() {
+        if (navigator.getUserMedia) {
+            navigator.getUserMedia (
+
+                // constraints
+                {
+                    video: true,
+                    audio: false
+                },
+
+                // successCallback
+                function(localMediaStream) {
+                    video = document.querySelector('video');
+                    video.src = window.URL.createObjectURL(localMediaStream);
+                    webcamStream = localMediaStream;
+                },
+
+                // errorCallback
+                function(err) {
+                    console.log("The following error occured: " + err);
+                }
+            );
+        } else {
+            console.log("getUserMedia not supported");
+        }
+    }
+
+    function stopWebcam() {
+        webcamStream.stop();
+    }
+    //---------------------
+    // TAKE A SNAPSHOT CODE
+    //---------------------
+    var canvas, ctx;
+
+    function init() {
+        // Get the canvas and obtain a context for
+        // drawing in it
+        canvas = document.getElementById("myCanvas");
+        ctx = canvas.getContext('2d');
+    }
+
+    function snapshot() {
+        // Draws current image from the video element into the canvas
+        ctx.drawImage(video, 0,0, canvas.width, canvas.height);
+        var dataURL =  canvas.toDataURL();
+        //dataURL=dataURL.replace(/^data:image\/(png|jpeg);base64,/, "");
+
+        document.getElementById("data_url").innerHTML = dataURL;
+        get_val(dataURL);
+        //alert(dataURL);
+    }
+
+</script>
+</html>
+
